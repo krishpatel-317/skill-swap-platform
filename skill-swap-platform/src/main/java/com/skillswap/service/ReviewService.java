@@ -21,6 +21,9 @@ public class ReviewService {
     private final SwapRequestRepository swapRequestRepository;
     private final UserRepository userRepository;
 
+    // -------------------------
+    // CREATE REVIEW (CREATE)
+    // -------------------------
     @Transactional
     public Review createReview(Long swapRequestId,
                                String reviewerUsername,
@@ -72,11 +75,33 @@ public class ReviewService {
         return reviewRepository.save(review);
     }
 
+    // READ REVIEWS (READ)
     @Transactional(readOnly = true)
     public List<Review> getReviewsForUser(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new IllegalArgumentException("User not found with ID: " + userId);
         }
         return reviewRepository.findByRevieweeId(userId);
+    }
+
+    // UPDATE REVIEW (UPDATE)
+    @Transactional
+    public Review updateReview(Long id, Review updatedReview) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+
+        review.setRating(updatedReview.getRating());
+        review.setComment(updatedReview.getComment());
+
+        return reviewRepository.save(review);
+    }
+
+    // DELETE REVIEW (DELETE)
+    @Transactional
+    public void deleteReview(Long id) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+
+        reviewRepository.delete(review);
     }
 }

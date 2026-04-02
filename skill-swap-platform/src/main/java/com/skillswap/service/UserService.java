@@ -14,6 +14,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // REGISTER USER
     @Transactional
     public User registerUser(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
@@ -25,10 +26,10 @@ public class UserService {
                     "Email already registered: " + user.getEmail());
         }
 
-        // Encode the raw password before saving
+        // Encode password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Default role is USER unless explicitly set to ADMIN
+        // Default role
         if (user.getRole() == null) {
             user.setRole(User.Role.USER);
         }
@@ -36,10 +37,40 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // GET USER
     @Transactional(readOnly = true)
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "User not found with ID: " + id));
+    }
+
+    // UPDATE USER
+    @Transactional
+    public User updateUser(Long id, User updatedUser) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // update only editable fields
+        user.setUsername(updatedUser.getUsername());
+        user.setEmail(updatedUser.getEmail());
+
+        // encode password if updated
+        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+        }
+
+        user.setBio(updatedUser.getBio());
+
+        return userRepository.save(user);
+    }
+
+    // DELETE USER
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        userRepository.delete(user);
     }
 }

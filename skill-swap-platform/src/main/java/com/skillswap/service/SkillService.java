@@ -54,4 +54,13 @@ public class SkillService {
 
         skillRepository.delete(skill);
     }
+    public Skill updateSkill(Long id, Skill updatedSkill) {
+        Skill skill = skillRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Skill not found"));
+
+        skill.setName(updatedSkill.getName());
+        skill.setDescription(updatedSkill.getDescription());
+
+        return skillRepository.save(skill);
+    }
 }

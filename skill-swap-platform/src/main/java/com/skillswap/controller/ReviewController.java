@@ -55,4 +55,14 @@ public class ReviewController {
 
         return ResponseEntity.ok(reviews);
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Review> updateReview(@PathVariable Long id, @RequestBody Review review) {
+        return ResponseEntity.ok(reviewService.updateReview(id, review));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteReview(@PathVariable Long id) {
+        reviewService.deleteReview(id);
+        return ResponseEntity.ok("Review deleted");
+    }
 }

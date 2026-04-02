@@ -87,10 +87,6 @@ public class SwapRequestService {
                         "Swap request not found with ID: " + requestId));
     }
 
-    // -------------------------
-    // Private Helpers
-    // -------------------------
-
     private SwapRequest getPendingRequestAndValidateReceiver(
             Long requestId, String requesterUsername) {
 
