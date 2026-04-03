@@ -32,17 +32,23 @@ public class Review {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Review belongs to one swap request (1-to-1)
+    // -------------------------
+    // Review belongs to one swap request
+    // -------------------------
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "swap_request_id", nullable = false, unique = true)
     private SwapRequest swapRequest;
 
-    // Reviewer (the one writing the review)
+    // -------------------------
+    // Reviewer (who wrote the review)
+    // -------------------------
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id", nullable = false)
     private User reviewer;
 
-    // Reviewee (the one being reviewed)
+    // -------------------------
+    // Reviewee (who received the review)
+    // -------------------------
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewee_id", nullable = false)
     private User reviewee;

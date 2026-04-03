@@ -18,6 +18,9 @@ public class SkillService {
     private final SkillRepository skillRepository;
     private final UserRepository userRepository;
 
+    // -------------------------
+    // CREATE - Add Skill
+    // -------------------------
     @Transactional
     public Skill createSkill(Skill skill, Long ownerId) {
         User owner = userRepository.findById(ownerId)
@@ -28,11 +31,46 @@ public class SkillService {
         return skillRepository.save(skill);
     }
 
+    // -------------------------
+    // READ - Get All Skills
+    // -------------------------
     @Transactional(readOnly = true)
     public List<Skill> getAllSkills() {
         return skillRepository.findAll();
     }
 
+    // -------------------------
+    // UPDATE - Update Skill
+    // -------------------------
+    @Transactional
+    public Skill updateSkill(Long skillId, Skill updatedSkill, String requesterUsername) {
+        Skill skill = skillRepository.findById(skillId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Skill not found with ID: " + skillId));
+
+        User requester = userRepository.findByUsername(requesterUsername)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found: " + requesterUsername));
+
+        // Only owner or ADMIN can update
+        boolean isAdmin = requester.getRole() == User.Role.ADMIN;
+        boolean isOwner = skill.getOwner().getId().equals(requester.getId());
+
+        if (!isAdmin && !isOwner) {
+            throw new AccessDeniedException(
+                    "You do not have permission to update this skill");
+        }
+
+        skill.setName(updatedSkill.getName());
+        skill.setDescription(updatedSkill.getDescription());
+        skill.setLevel(updatedSkill.getLevel()); // ← was missing in your code!
+
+        return skillRepository.save(skill);
+    }
+
+    // -------------------------
+    // DELETE - Delete Skill (ADMIN or Owner)
+    // -------------------------
     @Transactional
     public void deleteSkill(Long skillId, String requesterUsername) {
         Skill skill = skillRepository.findById(skillId)
@@ -53,14 +91,5 @@ public class SkillService {
         }
 
         skillRepository.delete(skill);
-    }
-    public Skill updateSkill(Long id, Skill updatedSkill) {
-        Skill skill = skillRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Skill not found"));
-
-        skill.setName(updatedSkill.getName());
-        skill.setDescription(updatedSkill.getDescription());
-
-        return skillRepository.save(skill);
     }
 }

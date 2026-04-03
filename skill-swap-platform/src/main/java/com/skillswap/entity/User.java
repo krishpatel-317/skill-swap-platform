@@ -12,7 +12,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-// Lombok annotation - Project Lombok is a Java library that reduces boilerplate code by automatically generating common methods at compile time using annotations.  It eliminates repetitive code for getters, setters, constructors, toString(), equals(), and hashCode() methods
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,7 +47,7 @@ public class User {
     @Column(length = 500)
     private String bio;
 
-    @Enumerated(EnumType.STRING)//Tells Hibernate -> save role as TEXT in database
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private Role role = Role.USER;
@@ -57,18 +56,43 @@ public class User {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    // -------------------------
     // One user can have many skills
+    // If user deleted → skills deleted
+    // -------------------------
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Skill> skills = new ArrayList<>();
 
+    // -------------------------
     // One user can send many swap requests
+    // If user deleted → sent swap requests deleted
+    // -------------------------
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<SwapRequest> sentRequests = new ArrayList<>();
 
+    // -------------------------
     // One user can receive many swap requests
+    // If user deleted → received swap requests deleted
+    // -------------------------
     @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<SwapRequest> receivedRequests = new ArrayList<>();
+
+    // -------------------------
+    // Reviews written by this user
+    // If user deleted → their reviews deleted
+    // -------------------------
+    @OneToMany(mappedBy = "reviewer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Review> reviewsGiven = new ArrayList<>();
+
+    // -------------------------
+    // Reviews received by this user
+    // If user deleted → reviews about them deleted
+    // -------------------------
+    @OneToMany(mappedBy = "reviewee", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Review> reviewsReceived = new ArrayList<>();
 }

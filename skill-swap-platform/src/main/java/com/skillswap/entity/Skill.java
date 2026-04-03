@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "skills")
@@ -43,8 +45,26 @@ public class Skill {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    // -------------------------
     // Many skills belong to one user
+    // -------------------------
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User owner;
+
+    // -------------------------
+    // Swap requests where this skill was OFFERED
+    // If skill deleted → those swap requests deleted
+    // -------------------------
+    @OneToMany(mappedBy = "offeredSkill", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SwapRequest> offeredInRequests = new ArrayList<>();
+
+    // -------------------------
+    // Swap requests where this skill was REQUESTED
+    // If skill deleted → those swap requests deleted
+    // -------------------------
+    @OneToMany(mappedBy = "requestedSkill", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SwapRequest> requestedInRequests = new ArrayList<>();
 }

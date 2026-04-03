@@ -42,27 +42,38 @@ public class SwapRequest {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Many swap requests sent by one user (sender)
+    // -------------------------
+    // Sender of swap request
+    // -------------------------
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
-    // Many swap requests received by one user (receiver)
+    // -------------------------
+    // Receiver of swap request
+    // -------------------------
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receiver_id", nullable = false)
     private User receiver;
 
-    // The skill being offered by sender
+    // -------------------------
+    // Skill being offered by sender
+    // -------------------------
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "offered_skill_id", nullable = false)
     private Skill offeredSkill;
 
-    // The skill being requested from receiver
+    // -------------------------
+    // Skill being requested from receiver
+    // -------------------------
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requested_skill_id", nullable = false)
     private Skill requestedSkill;
 
+    // -------------------------
     // One swap request has one review
+    // If swap request deleted → review deleted
+    // -------------------------
     @OneToOne(mappedBy = "swapRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     private Review review;
 

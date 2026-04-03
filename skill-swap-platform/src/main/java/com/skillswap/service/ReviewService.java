@@ -22,7 +22,7 @@ public class ReviewService {
     private final UserRepository userRepository;
 
     // -------------------------
-    // CREATE REVIEW (CREATE)
+    // CREATE - Create Review
     // -------------------------
     @Transactional
     public Review createReview(Long swapRequestId,
@@ -75,32 +75,59 @@ public class ReviewService {
         return reviewRepository.save(review);
     }
 
-    // READ REVIEWS (READ)
+    // -------------------------
+    // READ - Get Reviews for User
+    // -------------------------
     @Transactional(readOnly = true)
     public List<Review> getReviewsForUser(Long userId) {
         if (!userRepository.existsById(userId)) {
-            throw new IllegalArgumentException("User not found with ID: " + userId);
+            throw new IllegalArgumentException(
+                    "User not found with ID: " + userId);
         }
         return reviewRepository.findByRevieweeId(userId);
     }
 
-    // UPDATE REVIEW (UPDATE)
+    // -------------------------
+    // UPDATE - Update Review
+    // -------------------------
     @Transactional
-    public Review updateReview(Long id, Review updatedReview) {
-        Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+    public Review updateReview(Long id, Integer rating, String comment,
+                               String requesterUsername) {
 
-        review.setRating(updatedReview.getRating());
-        review.setComment(updatedReview.getComment());
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Review not found with ID: " + id));
+
+        // Only the reviewer can update their own review
+        if (!review.getReviewer().getUsername().equals(requesterUsername)) {
+            throw new AccessDeniedException(
+                    "You can only update your own reviews");
+        }
+
+        review.setRating(rating);
+        review.setComment(comment);
 
         return reviewRepository.save(review);
     }
 
-    // DELETE REVIEW (DELETE)
+    // -------------------------
+    // DELETE - Delete Review (ADMIN only)
+    // -------------------------
     @Transactional
-    public void deleteReview(Long id) {
+    public void deleteReview(Long id, String requesterUsername) {
+        User requester = userRepository.findByUsername(requesterUsername)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found: " + requesterUsername));
+
+        // Only ADMIN can delete reviews
+        if (requester.getRole() != User.Role.ADMIN) {
+            throw new AccessDeniedException(
+                    "Only admin can delete reviews");
+        }
+
         Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Review not found with ID: " + id));
 
         reviewRepository.delete(review);
     }

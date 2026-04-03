@@ -20,10 +20,9 @@ public class SkillController {
 
     private final SkillService skillService;
 
-    /**
-     * POST /skills
-     * Create a new skill (authenticated).
-     */
+    // -------------------------
+    // CREATE - Add Skill
+    // -------------------------
     @PostMapping
     public ResponseEntity<SkillDTO.Response> createSkill(
             @Valid @RequestBody SkillDTO.Request request) {
@@ -39,10 +38,9 @@ public class SkillController {
                 .body(SkillDTO.Response.fromEntity(saved));
     }
 
-    /**
-     * GET /skills
-     * Get all skills (authenticated).
-     */
+    // -------------------------
+    // READ - Get All Skills
+    // -------------------------
     @GetMapping
     public ResponseEntity<List<SkillDTO.Response>> getAllSkills() {
         List<SkillDTO.Response> skills = skillService.getAllSkills()
@@ -52,11 +50,28 @@ public class SkillController {
         return ResponseEntity.ok(skills);
     }
 
-    /**
-     * DELETE /skills/{id}
-     * Delete a skill (ADMIN only, enforced by SecurityConfig).
-     * Additional owner check is done inside SkillService.
-     */
+    // -------------------------
+    // UPDATE - Update Skill (Owner or ADMIN)
+    // -------------------------
+    @PutMapping("/{id}")
+    public ResponseEntity<SkillDTO.Response> updateSkill(
+            @PathVariable Long id,
+            @Valid @RequestBody SkillDTO.Request request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Skill skill = Skill.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .level(request.getLevel())
+                .build();
+
+        Skill updated = skillService.updateSkill(id, skill, userDetails.getUsername());
+        return ResponseEntity.ok(SkillDTO.Response.fromEntity(updated));
+    }
+
+    // -------------------------
+    // DELETE - Delete Skill (ADMIN or Owner)
+    // -------------------------
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSkill(
             @PathVariable Long id,
@@ -64,9 +79,5 @@ public class SkillController {
 
         skillService.deleteSkill(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
-    }
-    @PutMapping("/{id}")
-    public ResponseEntity<Skill> updateSkill(@PathVariable Long id, @RequestBody Skill skill) {
-        return ResponseEntity.ok(skillService.updateSkill(id, skill));
     }
 }

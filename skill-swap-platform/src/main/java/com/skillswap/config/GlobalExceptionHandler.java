@@ -51,12 +51,13 @@ public class GlobalExceptionHandler {
     }
 
     // -------------------------
-    // Access denied (403)
+    // Access denied from our service code (403)
     // -------------------------
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(
             AccessDeniedException ex) {
-        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null);
+        return buildResponse(HttpStatus.FORBIDDEN,
+                "You do not have permission to perform this action", null);
     }
 
     // -------------------------

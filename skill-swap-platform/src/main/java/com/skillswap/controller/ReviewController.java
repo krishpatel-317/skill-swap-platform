@@ -20,10 +20,9 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    /**
-     * POST /reviews
-     * Create a review for a completed (ACCEPTED) swap (authenticated).
-     */
+    // -------------------------
+    // CREATE - Post Review
+    // -------------------------
     @PostMapping
     public ResponseEntity<ReviewDTO.Response> createReview(
             @Valid @RequestBody ReviewDTO.Request request,
@@ -40,10 +39,9 @@ public class ReviewController {
                 .body(ReviewDTO.Response.fromEntity(review));
     }
 
-    /**
-     * GET /reviews/user/{userId}
-     * Get all reviews received by a user (authenticated).
-     */
+    // -------------------------
+    // READ - Get Reviews for User
+    // -------------------------
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ReviewDTO.Response>> getReviewsForUser(
             @PathVariable Long userId) {
@@ -55,14 +53,35 @@ public class ReviewController {
 
         return ResponseEntity.ok(reviews);
     }
+
+    // -------------------------
+    // UPDATE - Update Review (Reviewer only)
+    // -------------------------
     @PutMapping("/{id}")
-    public ResponseEntity<Review> updateReview(@PathVariable Long id, @RequestBody Review review) {
-        return ResponseEntity.ok(reviewService.updateReview(id, review));
+    public ResponseEntity<ReviewDTO.Response> updateReview(
+            @PathVariable Long id,
+            @Valid @RequestBody ReviewDTO.Request request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Review updated = reviewService.updateReview(
+                id,
+                request.getRating(),
+                request.getComment(),
+                userDetails.getUsername()
+        );
+
+        return ResponseEntity.ok(ReviewDTO.Response.fromEntity(updated));
     }
 
+    // -------------------------
+    // DELETE - Delete Review (ADMIN only)
+    // -------------------------
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteReview(@PathVariable Long id) {
-        reviewService.deleteReview(id);
-        return ResponseEntity.ok("Review deleted");
+    public ResponseEntity<String> deleteReview(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        reviewService.deleteReview(id, userDetails.getUsername());
+        return ResponseEntity.ok("Review deleted successfully");
     }
 }
