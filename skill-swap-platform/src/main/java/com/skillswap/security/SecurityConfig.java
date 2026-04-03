@@ -38,7 +38,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
@@ -51,71 +52,88 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
 
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                .headers(headers ->
+                        headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // ── Custom Error Responses ───────────────────────────────────
+                // 🔥 CUSTOM ERROR HANDLING
                 .exceptionHandling(ex -> ex
 
-                        // When logged in but no permission → 403
+                        // 🔴 403 → Permission issue
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(403);
                             response.setContentType("application/json");
                             response.getWriter().write("""
-                        {
-                            "status": 403,
-                            "error": "Forbidden",
-                            "message": "You do not have permission to perform this action",
-                            "timestamp": "%s"
-                        }
-                        """.formatted(LocalDateTime.now()));
+                    {
+                        "status": 403,
+                        "error": "Forbidden",
+                        "message": "You do not have permission to perform this action",
+                        "timestamp": "%s"
+                    }
+                    """.formatted(LocalDateTime.now()));
                         })
 
-                        // When not logged in at all → 401
+                        // 🔴 401 → Authentication issue (FIXED LOGIC 🔥)
                         .authenticationEntryPoint((request, response, authException) -> {
+
                             response.setStatus(401);
                             response.setContentType("application/json");
+
+                            String authHeader = request.getHeader("Authorization");
+                            String message;
+
+                            if (authHeader == null || authHeader.isBlank()) {
+                                message = "You must be logged in to access this resource";
+                            } else {
+                                message = "Invalid username or password";
+                            }
+
                             response.getWriter().write("""
-                        {
-                            "status": 401,
-                            "error": "Unauthorized",
-                            "message": "You must be logged in to access this resource",
-                            "timestamp": "%s"
-                        }
-                        """.formatted(LocalDateTime.now()));
+                    {
+                        "status": 401,
+                        "error": "Unauthorized",
+                        "message": "%s",
+                        "timestamp": "%s"
+                    }
+                    """.formatted(message, LocalDateTime.now()));
                         })
                 )
 
-                // ── Authorization Rules ──────────────────────────────────────
+                // 🔐 AUTHORIZATION RULES
                 .authorizeHttpRequests(auth -> auth
 
                         // Public
                         .requestMatchers(HttpMethod.POST, "/users/register").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
 
                         // ADMIN only
                         .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/reviews/**").hasRole("ADMIN")
 
-                        // Authenticated (USER or ADMIN)
-                        .requestMatchers(HttpMethod.GET,    "/users/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT,    "/users/**").authenticated()
-                        .requestMatchers(HttpMethod.POST,   "/skills/**").authenticated()
-                        .requestMatchers(HttpMethod.GET,    "/skills/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT,    "/skills/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/skills/**").authenticated()
-                        .requestMatchers(HttpMethod.POST,   "/swap-requests/**").authenticated()
-                        .requestMatchers(HttpMethod.GET,    "/swap-requests/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT,    "/swap-requests/**").authenticated()
-                        .requestMatchers(HttpMethod.POST,   "/reviews/**").authenticated()
-                        .requestMatchers(HttpMethod.GET,    "/reviews/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT,    "/reviews/**").authenticated()
+                        // USER only
+                        .requestMatchers(HttpMethod.POST, "/skills/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/skills/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.DELETE, "/skills/**").hasRole("USER")
+
+                        .requestMatchers(HttpMethod.POST, "/swap-requests/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/swap-requests/**").hasRole("USER")
+
+                        .requestMatchers(HttpMethod.POST, "/reviews/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/reviews/**").hasRole("USER")
+
+                        // VIEW (both roles)
+                        .requestMatchers(HttpMethod.GET, "/users/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/skills/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/swap-requests/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/reviews/**").authenticated()
+
+                        // Update user → USER only
+                        .requestMatchers(HttpMethod.PUT, "/users/**").hasRole("USER")
 
                         .anyRequest().authenticated()
                 )

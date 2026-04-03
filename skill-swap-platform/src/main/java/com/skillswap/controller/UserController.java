@@ -61,11 +61,20 @@ public class UserController {
     }
 
     // DELETE - Delete User (ADMIN only)
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<String> deleteUser(
+//            @PathVariable Long id,
+//            @AuthenticationPrincipal UserDetails userDetails) {
+//        userService.deleteUser(id, userDetails.getUsername());
+//        return ResponseEntity.ok("User deleted successfully");
+//    }
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(
+    public ResponseEntity<Void> deleteUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         userService.deleteUser(id, userDetails.getUsername());
-        return ResponseEntity.ok("User deleted successfully");
+
+        return ResponseEntity.noContent().build();
     }
 }
