@@ -62,10 +62,10 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 🔥 CUSTOM ERROR HANDLING
+                // CUSTOM ERROR HANDLING
                 .exceptionHandling(ex -> ex
 
-                        // 🔴 403 → Permission issue
+                        // 403 → Permission issue
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(403);
                             response.setContentType("application/json");
@@ -79,7 +79,7 @@ public class SecurityConfig {
                     """.formatted(LocalDateTime.now()));
                         })
 
-                        // 🔴 401 → Authentication issue (FIXED LOGIC 🔥)
+                        // 401 → Authentication issue (FIXED LOGIC)
                         .authenticationEntryPoint((request, response, authException) -> {
 
                             response.setStatus(401);
@@ -105,7 +105,7 @@ public class SecurityConfig {
                         })
                 )
 
-                // 🔐 AUTHORIZATION RULES
+                // AUTHORIZATION RULES
                 .authorizeHttpRequests(auth -> auth
 
                         // Public

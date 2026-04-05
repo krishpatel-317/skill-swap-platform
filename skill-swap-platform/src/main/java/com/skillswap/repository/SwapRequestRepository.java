@@ -9,6 +9,15 @@ import java.util.List;
 @Repository
 public interface SwapRequestRepository extends JpaRepository<SwapRequest, Long> {
 
+    // Prevent duplicate PENDING requests only
+    boolean existsBySenderIdAndReceiverIdAndOfferedSkillIdAndRequestedSkillIdAndStatus(
+            Long senderId,
+            Long receiverId,
+            Long offeredSkillId,
+            Long requestedSkillId,
+            SwapRequest.SwapStatus status
+    );
+
     List<SwapRequest> findBySenderId(Long senderId);
 
     List<SwapRequest> findByReceiverId(Long receiverId);

@@ -21,12 +21,16 @@ public class SwapRequestService {
     private final UserRepository userRepository;
     private final SkillRepository skillRepository;
 
+    // -------------------------
+    // CREATE SWAP REQUEST
+    // -------------------------
     @Transactional
     public SwapRequest createSwapRequest(Long senderId,
                                          Long receiverId,
                                          Long offeredSkillId,
                                          Long requestedSkillId,
                                          String message) {
+
         User sender = getUserById(senderId);
         User receiver = getUserById(receiverId);
 
@@ -50,6 +54,19 @@ public class SwapRequestService {
                     "Requested skill does not belong to receiver");
         }
 
+        // 🔥 PREVENT DUPLICATE PENDING REQUESTS
+        if (swapRequestRepository
+                .existsBySenderIdAndReceiverIdAndOfferedSkillIdAndRequestedSkillIdAndStatus(
+                        senderId,
+                        receiverId,
+                        offeredSkillId,
+                        requestedSkillId,
+                        SwapRequest.SwapStatus.PENDING)) {
+
+            throw new IllegalStateException(
+                    "Duplicate pending swap request already exists");
+        }
+
         SwapRequest request = SwapRequest.builder()
                 .sender(sender)
                 .receiver(receiver)
@@ -62,24 +79,37 @@ public class SwapRequestService {
         return swapRequestRepository.save(request);
     }
 
+    // -------------------------
+    // ACCEPT REQUEST
+    // -------------------------
     @Transactional
     public SwapRequest acceptRequest(Long requestId, String requesterUsername) {
         SwapRequest request = getPendingRequestAndValidateReceiver(
                 requestId, requesterUsername);
+
         request.setStatus(SwapRequest.SwapStatus.ACCEPTED);
         request.setUpdatedAt(LocalDateTime.now());
+
         return swapRequestRepository.save(request);
     }
 
+    // -------------------------
+    // REJECT REQUEST
+    // -------------------------
     @Transactional
     public SwapRequest rejectRequest(Long requestId, String requesterUsername) {
         SwapRequest request = getPendingRequestAndValidateReceiver(
                 requestId, requesterUsername);
+
         request.setStatus(SwapRequest.SwapStatus.REJECTED);
         request.setUpdatedAt(LocalDateTime.now());
+
         return swapRequestRepository.save(request);
     }
 
+    // -------------------------
+    // GET BY ID
+    // -------------------------
     @Transactional(readOnly = true)
     public SwapRequest getSwapRequestById(Long requestId) {
         return swapRequestRepository.findById(requestId)
@@ -87,6 +117,9 @@ public class SwapRequestService {
                         "Swap request not found with ID: " + requestId));
     }
 
+    // -------------------------
+    // PRIVATE HELPERS
+    // -------------------------
     private SwapRequest getPendingRequestAndValidateReceiver(
             Long requestId, String requesterUsername) {
 

@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface SkillRepository extends JpaRepository<Skill, Long> {
 
+    boolean existsByOwnerIdAndNameIgnoreCase(Long ownerId, String name);
+
     List<Skill> findByOwnerId(Long ownerId);
 
     List<Skill> findByLevel(Skill.SkillLevel level);

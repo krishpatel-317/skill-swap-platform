@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@Slf4j
+@Slf4j //-Automatically creates a logger object (log)
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer {

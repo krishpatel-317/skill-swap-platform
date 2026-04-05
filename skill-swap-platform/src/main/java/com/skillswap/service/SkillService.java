@@ -27,7 +27,17 @@ public class SkillService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "User not found with ID: " + ownerId));
 
+        // 🔥 Normalize skill name (avoid "Java", " java ", "JAVA")
+        String normalizedName = skill.getName().trim().toLowerCase();
+
+        // 🔥 Prevent duplicate skill for same user
+        if (skillRepository.existsByOwnerIdAndNameIgnoreCase(ownerId, normalizedName)) {
+            throw new IllegalStateException("Skill already exists for this user");
+        }
+
+        skill.setName(normalizedName);
         skill.setOwner(owner);
+
         return skillRepository.save(skill);
     }
 
@@ -61,15 +71,26 @@ public class SkillService {
                     "You do not have permission to update this skill");
         }
 
-        skill.setName(updatedSkill.getName());
+        // 🔥 Normalize updated name
+        String normalizedName = updatedSkill.getName().trim().toLowerCase();
+
+        // 🔥 Prevent duplicate on update (excluding current skill)
+        if (!skill.getName().equalsIgnoreCase(normalizedName) &&
+                skillRepository.existsByOwnerIdAndNameIgnoreCase(
+                        skill.getOwner().getId(), normalizedName)) {
+
+            throw new IllegalStateException("Skill already exists for this user");
+        }
+
+        skill.setName(normalizedName);
         skill.setDescription(updatedSkill.getDescription());
-        skill.setLevel(updatedSkill.getLevel()); // ← was missing in your code!
+        skill.setLevel(updatedSkill.getLevel());
 
         return skillRepository.save(skill);
     }
 
     // -------------------------
-    // DELETE - Delete Skill (ADMIN or Owner)
+    // DELETE - Delete Skill
     // -------------------------
     @Transactional
     public void deleteSkill(Long skillId, String requesterUsername) {
@@ -81,7 +102,7 @@ public class SkillService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "User not found: " + requesterUsername));
 
-        // ADMIN can delete any skill; USER can only delete their own
+        // ADMIN or Owner only
         boolean isAdmin = requester.getRole() == User.Role.ADMIN;
         boolean isOwner = skill.getOwner().getId().equals(requester.getId());
 
